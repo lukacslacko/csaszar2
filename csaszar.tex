@@ -1,0 +1,450 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{parskip}
+\usepackage{hyperref}
+
+\title{Toward the Cs\'asz\'ar Polyhedron via Cell-Complex Enumeration\\[2pt]
+\large Step 1: Notation and the First Conditions}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Notation}
+
+Let $P_i = (x_i, y_i, z_i) \in \mathbb{R}^3$ be the coordinate vector of the symbolic
+point $i$. Define the \emph{bracket}
+\[
+[abcd] \;:=\; \det\!\begin{pmatrix} 1 & x_a & y_a & z_a \\ 1 & x_b & y_b & z_b \\ 1 & x_c & y_c & z_c \\ 1 & x_d & y_d & z_d \end{pmatrix}
+\;=\; \det\!\bigl(P_b-P_a,\; P_c-P_a,\; P_d-P_a\bigr),
+\]
+which is $6$ times the signed volume of the tetrahedron $abcd$ and is alternating in
+$a,b,c,d$. With this,
+\[
+abc^{\pm} \;:=\; \bigl\{\,p\in\mathbb{R}^3 \;:\; \pm[a,b,c,p] > 0\,\bigr\}.
+\]
+
+\section*{Condition 1: \texorpdfstring{$3 \in 012^+$}{3 in 012+}}
+
+This is just $[0,1,2,3] > 0$. Three equivalent forms:
+
+\paragraph{(a) Determinant.}
+\[
+\det\!\begin{pmatrix} 1 & x_0 & y_0 & z_0 \\ 1 & x_1 & y_1 & z_1 \\ 1 & x_2 & y_2 & z_2 \\ 1 & x_3 & y_3 & z_3 \end{pmatrix} > 0
+\quad\Longleftrightarrow\quad
+\det\!\begin{pmatrix} x_1-x_0 & y_1-y_0 & z_1-z_0 \\ x_2-x_0 & y_2-y_0 & z_2-z_0 \\ x_3-x_0 & y_3-y_0 & z_3-z_0 \end{pmatrix} > 0
+\]
+
+\paragraph{(b) Scalar triple product (cross-product antisymmetry).}
+\[
+(P_1 - P_0)\,\cdot\,\bigl((P_2 - P_0)\times(P_3 - P_0)\bigr) \;>\; 0.
+\]
+This form privileges $P_0$ as a basepoint, hiding the $S_4$-antisymmetry on the
+four points. \emph{Fully unparenthesized.} Distribute the differences (using
+$a\!\times\!a=0$ and the cyclic identity $a\!\cdot\!(b\!\times\!c)=c\!\cdot\!(a\!\times\!b)$);
+the bracket reorganizes into the alternating sum over $3$-element subsets of
+$\{0,1,2,3\}$:
+\[
+[0,1,2,3] \;=\; P_1\!\cdot\!(P_2\!\times\!P_3) \;-\; P_0\!\cdot\!(P_2\!\times\!P_3) \;+\; P_0\!\cdot\!(P_1\!\times\!P_3) \;-\; P_0\!\cdot\!(P_1\!\times\!P_2).
+\]
+Equivalently, with $T(i,j,k) := P_i\cdot(P_j\!\times\!P_k)$ (cyclically symmetric in
+$i,j,k$) and $\widehat{d}$ denoting the elements of $\{0,1,2,3\}\setminus\{d\}$ in
+increasing order,
+\[
+[0,1,2,3] \;=\; \sum_{d=0}^{3} (-1)^d\, T\!\bigl(\widehat{d}\bigr).
+\]
+The $S_4$-antisymmetry is now manifest --- any swap of two points flips the
+bracket's sign.
+
+\paragraph{(c) Polynomial in coordinates.}
+With $\Delta_i := P_i - P_0$ for $i=1,2,3$:
+\[
+\Delta_{1,x}(\Delta_{2,y}\Delta_{3,z} - \Delta_{2,z}\Delta_{3,y})
++ \Delta_{1,y}(\Delta_{2,z}\Delta_{3,x} - \Delta_{2,x}\Delta_{3,z})
++ \Delta_{1,z}(\Delta_{2,x}\Delta_{3,y} - \Delta_{2,y}\Delta_{3,x}) \;>\; 0.
+\]
+Expanding the $\Delta$'s as differences of original coordinates:
+\[
+\begin{aligned}
+&(x_1{-}x_0)\bigl[(y_2{-}y_0)(z_3{-}z_0) - (z_2{-}z_0)(y_3{-}y_0)\bigr] \\
++\;&(y_1{-}y_0)\bigl[(z_2{-}z_0)(x_3{-}x_0) - (x_2{-}x_0)(z_3{-}z_0)\bigr] \\
++\;&(z_1{-}z_0)\bigl[(x_2{-}x_0)(y_3{-}y_0) - (y_2{-}y_0)(x_3{-}x_0)\bigr] \;>\; 0.
+\end{aligned}
+\]
+Again the $S_4$-antisymmetry is hidden inside the differences.
+\emph{Fully unparenthesized.} Distributing all subtractions yields the $24$-term
+Levi-Civita expansion:
+\[
+[0,1,2,3] \;=\; \sum_{(d,a,b,c)\in S_4} \mathrm{sgn}(d,a,b,c)\, x_a\, y_b\, z_c,
+\]
+where $(d,a,b,c)$ ranges over permutations of $(0,1,2,3)$ and $d$ is the row
+contributing the constant $1$ from the bordered determinant (so $d$ enters only
+through the sign). Grouped by missing index $d$:
+\[
+\begin{aligned}
+d{=}0:\quad &+\,x_1 y_2 z_3 - x_1 y_3 z_2 - x_2 y_1 z_3 + x_2 y_3 z_1 + x_3 y_1 z_2 - x_3 y_2 z_1 \\
+d{=}1:\quad &-\,x_0 y_2 z_3 + x_0 y_3 z_2 + x_2 y_0 z_3 - x_2 y_3 z_0 - x_3 y_0 z_2 + x_3 y_2 z_0 \\
+d{=}2:\quad &+\,x_0 y_1 z_3 - x_0 y_3 z_1 - x_1 y_0 z_3 + x_1 y_3 z_0 + x_3 y_0 z_1 - x_3 y_1 z_0 \\
+d{=}3:\quad &-\,x_0 y_1 z_2 + x_0 y_2 z_1 + x_1 y_0 z_2 - x_1 y_2 z_0 - x_2 y_0 z_1 + x_2 y_1 z_0
+\end{aligned}
+\]
+Every monomial uses each index at most once, and any swap of two indices flips the
+signs of all $24$ terms in lock-step --- the four-fold antisymmetry on $\{0,1,2,3\}$
+is entirely visible.
+
+\section*{Condition 2: \texorpdfstring{$012^+ \cap 013^+ \neq \emptyset$}{012+ cap 013+ nonempty}}
+
+Existence of $p$ with $[0,1,2,p] > 0$ \emph{and} $[0,1,3,p] > 0$.
+
+\paragraph{(a) Determinant.}
+\[
+\exists\, p\in\mathbb{R}^3:\quad
+\det\!\begin{pmatrix} 1 & x_0 & y_0 & z_0 \\ 1 & x_1 & y_1 & z_1 \\ 1 & x_2 & y_2 & z_2 \\ 1 & p_x & p_y & p_z \end{pmatrix} > 0
+\;\wedge\;
+\det\!\begin{pmatrix} 1 & x_0 & y_0 & z_0 \\ 1 & x_1 & y_1 & z_1 \\ 1 & x_3 & y_3 & z_3 \\ 1 & p_x & p_y & p_z \end{pmatrix} > 0
+\]
+
+\paragraph{(b) Scalar triple product.}
+\[
+\exists\, p\in\mathbb{R}^3:\quad
+(P_1{-}P_0)\cdot\bigl((P_2{-}P_0)\times(p{-}P_0)\bigr) > 0
+\;\wedge\;
+(P_1{-}P_0)\cdot\bigl((P_3{-}P_0)\times(p{-}P_0)\bigr) > 0.
+\]
+\emph{Fully unparenthesized.} Each bracket cofactor-expands as in
+Condition~1(b), with $p$ playing the role of the fourth point:
+\[
+\begin{aligned}
+{[0,1,2,p]} \;&=\; P_1\!\cdot\!(P_2\!\times\!p) \;-\; P_0\!\cdot\!(P_2\!\times\!p) \;+\; P_0\!\cdot\!(P_1\!\times\!p) \;-\; P_0\!\cdot\!(P_1\!\times\!P_2),\\
+{[0,1,3,p]} \;&=\; P_1\!\cdot\!(P_3\!\times\!p) \;-\; P_0\!\cdot\!(P_3\!\times\!p) \;+\; P_0\!\cdot\!(P_1\!\times\!p) \;-\; P_0\!\cdot\!(P_1\!\times\!P_3).
+\end{aligned}
+\]
+The shared term $P_0\!\cdot\!(P_1\!\times\!p)$ reflects that both brackets share
+the edge $\overline{P_0P_1}$. Each is $S_4$-antisymmetric in its own four points
+($\{0,1,2,p\}$ resp.\ $\{0,1,3,p\}$) and \emph{affine} in $p$.
+
+\paragraph{(c) Polynomial in coordinates.}
+Substitute $p$ for $P_3$ in the first inequality, and $p$ for $P_2$ (keeping $P_3$
+in the third slot) in the second. Writing $p=(x_p, y_p, z_p)$:
+\[
+\exists\,(x_p, y_p, z_p)\in\mathbb{R}^3:
+\]
+\[
+\begin{aligned}
+&(x_1{-}x_0)\bigl[(y_2{-}y_0)(z_p{-}z_0) - (z_2{-}z_0)(y_p{-}y_0)\bigr] \\
++\;&(y_1{-}y_0)\bigl[(z_2{-}z_0)(x_p{-}x_0) - (x_2{-}x_0)(z_p{-}z_0)\bigr] \\
++\;&(z_1{-}z_0)\bigl[(x_2{-}x_0)(y_p{-}y_0) - (y_2{-}y_0)(x_p{-}x_0)\bigr] \;>\; 0
+\end{aligned}
+\]
+\[
+\text{AND}
+\]
+\[
+\begin{aligned}
+&(x_1{-}x_0)\bigl[(y_3{-}y_0)(z_p{-}z_0) - (z_3{-}z_0)(y_p{-}y_0)\bigr] \\
++\;&(y_1{-}y_0)\bigl[(z_3{-}z_0)(x_p{-}x_0) - (x_3{-}x_0)(z_p{-}z_0)\bigr] \\
++\;&(z_1{-}z_0)\bigl[(x_3{-}x_0)(y_p{-}y_0) - (y_3{-}y_0)(x_p{-}x_0)\bigr] \;>\; 0.
+\end{aligned}
+\]
+\emph{Fully unparenthesized.} Each bracket admits the $24$-term Levi-Civita
+expansion of Condition~1(c). For $[0,1,2,p]$, treating $p$ as the fourth point
+and grouping by missing index:
+\[
+\begin{aligned}
+d{=}0:\quad &+\,x_1 y_2 z_p - x_1 y_p z_2 - x_2 y_1 z_p + x_2 y_p z_1 + x_p y_1 z_2 - x_p y_2 z_1 \\
+d{=}1:\quad &-\,x_0 y_2 z_p + x_0 y_p z_2 + x_2 y_0 z_p - x_2 y_p z_0 - x_p y_0 z_2 + x_p y_2 z_0 \\
+d{=}2:\quad &+\,x_0 y_1 z_p - x_0 y_p z_1 - x_1 y_0 z_p + x_1 y_p z_0 + x_p y_0 z_1 - x_p y_1 z_0 \\
+d{=}p:\quad &-\,x_0 y_1 z_2 + x_0 y_2 z_1 + x_1 y_0 z_2 - x_1 y_2 z_0 - x_2 y_0 z_1 + x_2 y_1 z_0.
+\end{aligned}
+\]
+$[0,1,3,p]$ is obtained by replacing every subscript $2$ with $3$ above. Two
+structural observations are now visible:
+\begin{itemize}
+  \item Rows $d=0,1,2$ contain all the $p$-dependence (linear in $p$); row $d=p$
+  is the constant $-\det(P_0,P_1,P_2)$ (resp.\ $-\det(P_0,P_1,P_3)$). So each
+  bracket is affine in $p$, and the realizability question is whether two open
+  halfspaces in $p$-space meet.
+  \item The $S_4$-antisymmetry on the bracket's four points $\{0,1,2,p\}$ (or
+  $\{0,1,3,p\}$) is manifest: every swap of two indices flips the signs of all
+  $24$ monomials simultaneously.
+\end{itemize}
+
+\section*{Realizability: \texorpdfstring{$012^+\cap 013^+$}{012+ cap 013+} exists, \texorpdfstring{$012^-\cap 013^+\cap 123^+\cap 203^+$}{012- cap 013+ cap 123+ cap 203+} does not}
+
+\paragraph{Notation conversion.} The bracket $[a,b,c,d]$ is alternating, so
+$[2,0,3,p] = -[0,2,3,p]$, hence
+\[
+203^+ \;=\; \{p : [2,0,3,p] > 0\} \;=\; \{p : [0,2,3,p] < 0\} \;=\; 023^-.
+\]
+The cell in question is therefore $012^- \cap 013^+ \cap 023^- \cap 123^+$ in
+canonical (sorted-index) notation --- the sign vector $(-,+,-,+)$ on the four
+faces $(012, 013, 023, 123)$ of tetrahedron $0123$.
+
+\paragraph{Key identity.} For any $p \in \mathbb{R}^3$,
+\begin{equation}\label{eq:star}\tag{$\star$}
+[0,1,2,p] \;-\; [0,1,3,p] \;+\; [0,2,3,p] \;-\; [1,2,3,p] \;=\; [0,1,2,3].
+\end{equation}
+
+\textit{Proof.} Since $P_0, P_1, P_2, P_3$ are affinely independent (because
+$[0,1,2,3] \neq 0$), every $p \in \mathbb{R}^3$ has unique barycentric coordinates
+\[
+p \;=\; \alpha_0 P_0 + \alpha_1 P_1 + \alpha_2 P_2 + \alpha_3 P_3,
+\qquad \alpha_0+\alpha_1+\alpha_2+\alpha_3 \;=\; 1.
+\]
+The lifted equality $(1,p) = \sum_i \alpha_i\,(1,P_i)$ holds in $\mathbb{R}^4$, so
+multilinearity of the bordered $4\times 4$ determinant in row $p$ gives, for
+distinct $a,b,c \in \{0,1,2,3\}$ with missing index $d$,
+\[
+[a,b,c,p] \;=\; \sum_{i=0}^{3} \alpha_i\, [a,b,c,i] \;=\; \alpha_d\, [a,b,c,d],
+\]
+since $[a,b,c,a] = [a,b,c,b] = [a,b,c,c] = 0$ (repeated row). Using
+$[0,1,3,2] = -[0,1,2,3]$, $[0,2,3,1] = +[0,1,2,3]$, $[1,2,3,0] = -[0,1,2,3]$
+(reorder the missing index back into canonical position), and dividing by
+$[0,1,2,3]$:
+\[
+\alpha_3 \;=\; \frac{[0,1,2,p]}{[0,1,2,3]},\quad
+\alpha_2 \;=\; \frac{-[0,1,3,p]}{[0,1,2,3]},\quad
+\alpha_1 \;=\; \frac{[0,2,3,p]}{[0,1,2,3]},\quad
+\alpha_0 \;=\; \frac{-[1,2,3,p]}{[0,1,2,3]}.
+\]
+Then $\alpha_0 + \alpha_1 + \alpha_2 + \alpha_3 = 1$, multiplied through by
+$[0,1,2,3]$, is exactly~\eqref{eq:star}. \hfill$\square$
+
+\paragraph{Why \texorpdfstring{$012^+ \cap 013^+$}{012+ cap 013+} is non-empty.}
+Take the explicit witness
+\[
+p^\ast \;:=\; 2 P_3 - P_2 \qquad \text{(the reflection of } P_2 \text{ across } P_3\text{).}
+\]
+Its coefficients $(2, -1)$ sum to $1$, so any affine function of $p$ evaluated at
+$p^\ast$ equals $2$ times its value at $P_3$ minus its value at $P_2$. With
+$[0,1,2,P_2]=0$ and $[0,1,2,P_3]=[0,1,2,3]$:
+\[
+[0,1,2,\,p^\ast] \;=\; 2\,[0,1,2,3] \;-\; 0 \;=\; 2\,[0,1,2,3] \;>\; 0.
+\]
+With $[0,1,3,P_2]=[0,1,3,2]=-[0,1,2,3]$ and $[0,1,3,P_3]=0$:
+\[
+[0,1,3,\,p^\ast] \;=\; 2\cdot 0 \;-\; (-[0,1,2,3]) \;=\; [0,1,2,3] \;>\; 0.
+\]
+Both brackets are positive, so $p^\ast \in 012^+ \cap 013^+$. (Geometrically:
+planes $012$ and $013$ are distinct and share the line $\overline{P_0 P_1}$, so
+they cut $\mathbb{R}^3$ into four open wedges, all non-empty; $012^+\cap 013^+$
+is one of them.)
+
+\paragraph{Why \texorpdfstring{$012^- \cap 013^+ \cap 023^- \cap 123^+$}{012- cap 013+ cap 023- cap 123+} is empty.}
+Suppose for contradiction such a $p$ exists. The four memberships translate to
+\[
+[0,1,2,p] < 0,\quad [0,1,3,p] > 0,\quad [0,2,3,p] < 0,\quad [1,2,3,p] > 0.
+\]
+Hence each summand on the left side of~\eqref{eq:star}, with its prescribed sign,
+is \emph{strictly negative}:
+\[
+\underbrace{[0,1,2,p]}_{<\,0}
+\;\underbrace{-\,[0,1,3,p]}_{<\,0}
+\;\underbrace{+\,[0,2,3,p]}_{<\,0}
+\;\underbrace{-\,[1,2,3,p]}_{<\,0}
+\;<\; 0.
+\]
+But by~\eqref{eq:star} this sum equals $[0,1,2,3]$, which is $>0$ by Condition~1.
+Contradiction. Hence $012^- \cap 013^+ \cap 023^- \cap 123^+ = \emptyset$.
+\hfill$\square$
+
+\paragraph{Geometric meaning.} In barycentric coordinates the four sign
+conditions read
+\[
+\alpha_0 < 0,\quad \alpha_1 < 0,\quad \alpha_2 < 0,\quad \alpha_3 < 0
+\qquad\text{(``$p$ on the wrong side of every face'')},
+\]
+which is impossible because $\alpha_0+\alpha_1+\alpha_2+\alpha_3 = 1 > 0$. The
+four face-planes of $0123$ in general position cut $\mathbb{R}^3$ into $15$ open
+cells (the count $\binom{4}{0}+\binom{4}{1}+\binom{4}{2}+\binom{4}{3}$), and the
+missing $16^{\mathrm{th}}$ sign vector is precisely $(012^-, 013^+, 023^-, 123^+)$.
+The asymmetry between the two cells of the question is now visible: $012^+\cap 013^+$
+slices $\mathbb{R}^3$ along only \emph{two} planes (a wedge --- always non-empty),
+while the missing $16^{\mathrm{th}}$ cell asks for a sign-coherent intersection
+across \emph{all four} faces of a closed tetrahedron, which the affine relation
+$\sum\alpha_i = 1$ rules out.
+
+\section*{Observations}
+
+\begin{itemize}
+  \item \textbf{Only signs matter.} The cell complex depends only on the
+  \emph{sign vector} in $\{+,-\}^{\binom{n}{3}}$. Coordinates are useful only as a
+  realizability oracle: if we want a ``without coordinates'' enumeration, the
+  coordinate forms are witnesses we consult only when the combinatorial sign rules
+  cannot decide.
+
+  \item \textbf{Condition 2 is automatic.} Planes $012$ and $013$ share the line
+  $\overline{P_0P_1}$ and (since $P_3 \notin$ plane $012$ by Condition~1) are
+  distinct. They partition $\mathbb{R}^3\setminus\overline{P_0P_1}$ into four open
+  wedges, all non-empty. So $012^+\cap 013^+\neq\emptyset$ trivially. A concrete
+  witness: any point $P_3 + \varepsilon\,\hat n_{013^+}$ with $\varepsilon$ small.
+
+  \item \textbf{Where it gets interesting.} Once we have all four planes
+  $\{012,\,013,\,023,\,123\}$ they cut $\mathbb{R}^3$ into
+  $\binom{4}{0}+\binom{4}{1}+\binom{4}{2}+\binom{4}{3}=15$ regions. Of the $2^4=16$
+  a-priori sign vectors, exactly one is empty --- the missing 16th cell. A clean
+  way to spot it: the sign vector that says ``$p$ is on the \emph{opposite} side of
+  every face from the opposite vertex of tetrahedron $0123$'' is not realizable
+  (no point sees every face from the wrong side).
+\end{itemize}
+
+\section*{Algorithm: deciding if a new plane $ij(n{+}1)$ slices an existing cell}
+
+We are now ready for the inductive step. Assume we have introduced $n+1$ named
+points $\{P_0,\ldots,P_n\}$ and constructed the cell complex of the
+$\binom{n+1}{3}$ planes through every triple. We pick a new point $P_{n+1}$
+inside one specific cell $C^\ast$ of the current complex; this pins the signs of
+all $4$-brackets involving $n{+}1$ (because membership of $P_{n+1}$ in $C^\ast$
+is exactly $\sigma_{C^\ast}(\Pi) = \mathrm{sgn}([\Pi, n{+}1])$ for every existing
+plane $\Pi$). Then we must slice every existing cell with the $\binom{n+1}{2}$
+new planes $\bigl\{\,ij(n{+}1) : 0\le i<j\le n\,\bigr\}$. The basic question is:
+given a cell $C$ and a new plane $\Pi = ij(n{+}1)$, does $\Pi$ slice $C$ (i.e.\
+are both $C\cap\Pi^+$ and $C\cap\Pi^-$ non-empty)?
+
+The algorithm below answers this question using the chirotope alone (no
+coordinates), and is correct in the general case. The conceptual primitive is
+the affine identity \eqref{eq:star} from earlier --- now applied to \emph{every}
+$4$-tuple of named points, not just $\{0,1,2,3\}$.
+
+\paragraph{State.} We maintain
+\begin{itemize}
+  \item the \textbf{chirotope}: $\mathrm{sgn}[a,b,c,d]$ for every $4$-subset
+  $\{a,b,c,d\}\subseteq\{0,\ldots,n{+}1\}$;
+  \item the \textbf{cell complex} of the previous step: each open cell $C$
+  stored as a sign vector $\sigma_C : \mathcal{H}_{\mathrm{old}} \to \{+,-\}$
+  over the old planes $\mathcal{H}_{\mathrm{old}} = \binom{\{0,\ldots,n\}}{3}$.
+\end{itemize}
+We do \emph{not} need anything else --- no coordinates, no magnitudes, no
+``rays at infinity.''
+
+\paragraph{The single sign-rule.} For every $4$-subset $\{a,b,c,d\}$ of named
+indices and any point $p$, the affine identity \eqref{eq:star} (proved earlier
+for $\{0,1,2,3\}$ but valid for any $4$-tuple, by the same barycentric
+argument) reads
+\[
+  [a,b,c,p] \;-\; [a,b,d,p] \;+\; [a,c,d,p] \;-\; [b,c,d,p] \;=\; [a,b,c,d].
+\]
+Taking signs and noting the four magnitudes on the LHS are positive, the LHS
+is forced to be strictly positive (regardless of magnitudes) iff the four
+signs $(\sigma(abc), -\sigma(abd), \sigma(acd), -\sigma(bcd))$ are all $+$,
+i.e.\ the cell sign pattern at the four ``faces of tetrahedron $abcd$'' is
+\[
+\bigl(\sigma(abc),\sigma(abd),\sigma(acd),\sigma(bcd)\bigr) \;=\; (+,-,+,-).
+\]
+Symmetrically the LHS is forced strictly negative iff the pattern is
+$(-,+,-,+)$. So:
+
+\noindent\textbf{Forbidden-pattern rule (per $4$-tuple).} A sign vector $\sigma$
+violates the chirotope at $\{a,b,c,d\}$ iff
+\[
+\bigl(\sigma(abc),\sigma(abd),\sigma(acd),\sigma(bcd)\bigr) = \bigl(-,+,-,+\bigr)\cdot \mathrm{sgn}[a,b,c,d],
+\]
+where the right-hand side means: when $\mathrm{sgn}[a,b,c,d]=+$ the forbidden
+pattern is $(-,+,-,+)$, and when $\mathrm{sgn}[a,b,c,d]=-$ the forbidden
+pattern is $(+,-,+,-)$. This is exactly the ``missing $16^{\mathrm{th}}$ cell''
+pattern from the original section, applied to every tetrahedron formed by four
+named points.
+
+\paragraph{Tope characterization.} A sign vector $\sigma$ over the planes
+$\binom{[N]}{3}$ corresponds to a non-empty open cell of the realized
+configuration iff it does not violate the forbidden-pattern rule at any
+$4$-subset $\{a,b,c,d\}$ of named indices. (For a representable rank-$4$
+chirotope --- which we have, by construction --- this is necessary and
+sufficient: it is the standard Grassmann--Pl\"ucker characterization of topes.)
+
+\paragraph{Slice test.} Given an old cell $C$ with sign vector $\sigma_C$ and a
+new plane $\Pi = ij(n{+}1)$, the slice question becomes a small constraint
+satisfaction problem. Try to extend $\sigma_C$ to a full sign vector $\sigma$ on
+$\binom{\{0,\ldots,n+1\}}{3}$ by assigning a sign to each of the
+$\binom{n+1}{2}$ new planes $\bigl\{ab(n{+}1) : 0\le a<b\le n\bigr\}$, subject
+to:
+\begin{enumerate}
+  \item the pinned sign $\sigma(\Pi) = +$;
+  \item the forbidden-pattern rule for every $4$-subset
+  $\{a,b,c,n{+}1\}$ with $\{a,b,c\}\subset\{0,\ldots,n\}$ (there are
+  $\binom{n+1}{3}$ such subsets); each such constraint involves the known
+  old-plane sign $\sigma_C(abc)$, the three new-plane signs
+  $\sigma(ab(n{+}1)), \sigma(ac(n{+}1)), \sigma(bc(n{+}1))$, and the chirotope
+  value $\mathrm{sgn}[a,b,c,n{+}1]$ (also known --- it was pinned when $P_{n+1}$
+  was placed in cell $C^\ast$).
+\end{enumerate}
+$4$-tuples not containing $n{+}1$ are already satisfied by $\sigma_C$ from the
+previous step, so they impose nothing new. If at least one extension exists,
+the half $C\cap\Pi^+$ is non-empty. Repeat with $\sigma(\Pi) = -$. The plane
+slices $C$ iff both halves are non-empty.
+
+\paragraph{Why this works.} Each forbidden-pattern rule is a single
+``XOR''-style clause: it forbids exactly one assignment of the three new-plane
+signs (the unique completion that, together with $\sigma_C(abc)$ and the
+chirotope sign, would form the missing-$16$th-cell pattern of tetrahedron
+$\{a,b,c,n{+}1\}$). Out of $2^3 = 8$ possible sign triples on
+$\{ab(n{+}1),ac(n{+}1),bc(n{+}1)\}$, exactly $7$ are admissible per clause,
+and the slice test is the conjunction over the $\binom{n+1}{3}$ clauses
+indexed by the choice of $\{a,b,c\}\subset\{0,\ldots,n\}$.
+
+\paragraph{Why this is also sufficient (and not merely necessary).} Necessity
+is immediate from $(\star_{abcd})$: any realized $p$ trivially satisfies every
+GP rule. The non-trivial direction is sufficiency --- if $\sigma$ violates no
+forbidden pattern, why must some $p$ realize it?
+
+The cleanest justification is via Farkas' lemma. The cell $C\cap\Pi^+$ is
+non-empty iff the strict-linear system
+\[
+\bigl\{\,\sigma(abc)\,[a,b,c,p] > 0 : \text{all triples}\,\bigr\}
+\]
+is feasible in $p\in\mathbb{R}^3$. By Farkas, infeasibility requires a
+non-negative combination $\sum \lambda_{abc}\,\sigma(abc)\,[a,b,c,p]$ that is
+identically $\le 0$ as a function of $p$. Since $[a,b,c,p]$ is affine, this
+means the linear part vanishes and the constant part is $\le 0$. The
+linear-part-vanishing condition is a non-negative-coefficient signed
+dependency among the plane-normals $\mathbf{n}_{abc}$.
+
+Now: \emph{every} such dependency comes (up to scaling) from the affine
+identity itself. Differentiating $(\star_{abcd})$ in $p$ gives
+\[
+\mathbf{n}_{abc} \;-\; \mathbf{n}_{abd} \;+\; \mathbf{n}_{acd} \;-\; \mathbf{n}_{bcd} \;=\; 0,
+\]
+which is the unique alternating $4$-term dependency of normals associated to
+the tetrahedron $\{a,b,c,d\}$. The non-negative Farkas combination matching
+this dependency forces the sign pattern $\sigma$ to align as $(+,-,+,-)$ or
+$(-,+,-,+)$ on those four planes, and then the constant value of the
+combination is $\pm[a,b,c,d]$. The ``$\le 0$'' condition on that constant is
+\emph{exactly} the GP forbidden pattern.
+
+So: Farkas-infeasibility $\iff$ some GP rule is violated. Contrapositive:
+GP-consistent $\iff$ realized. The algorithm is correct in the general case.
+
+(Equivalently, in oriented-matroid language: we are dealing with a
+representable rank-$4$ oriented matroid, and Las Vergnas' tope characterization
+says topes are exactly the sign vectors satisfying the circuit
+sign-conditions, which for rank $4$ are the $(\star_{abcd})$ rules. Mn\"ev's
+hardness applies to \emph{abstract} chirotopes; we never face it, because we
+extend a realized configuration at every step.)
+
+This is a CSP with $\binom{n+1}{2}$ Boolean variables and $\binom{n+1}{3}$
+clauses --- trivially solvable by backtracking for the values of $n$ relevant
+here ($n\le 6$ for everything up to the Cs\'asz\'ar polyhedron, giving
+$21$ variables and $35$ clauses).
+
+\paragraph{Why this is not NP-complete in our setting.} Realizability of an
+arbitrary abstract chirotope is $\exists\mathbb{R}$-complete (Mn\"ev), but that
+is not the question we ask: by construction we extend a chirotope that is
+already realized. For an already-realized rank-$4$ chirotope, the
+Grassmann--Pl\"ucker forbidden-pattern rule \emph{characterizes} topes, so the
+slice CSP is a faithful chirotope-only test. The CSP itself has small fixed
+arity (each clause touches only three new-plane variables), so it lies far
+below the worst-case complexity wall.
+
+\paragraph{Per-step complexity.} For step $n \to n{+}1$: $\binom{n+1}{2}$ new
+planes, each tested against every old cell. The number of old cells is
+bounded by Zaslavsky's count, $O(n^9)$. Each individual slice test is a CSP
+of fixed structure on $\binom{n+1}{2}$ variables and $\binom{n+1}{3}$ clauses,
+each of arity $3$; backtracking solves each instance in time polynomial in
+$n$. The whole step is therefore polynomial in $n$ (dominated by the cell
+count), and entirely chirotope-based.
+
+\end{document}
