@@ -349,103 +349,92 @@ pattern is $(+,-,+,-)$. This is exactly the ``missing $16^{\mathrm{th}}$ cell''
 pattern from the original section, applied to every tetrahedron formed by four
 named points.
 
-\paragraph{Tope characterization.} A sign vector $\sigma$ over the planes
-$\binom{[N]}{3}$ corresponds to a non-empty open cell of the realized
-configuration iff it does not violate the forbidden-pattern rule at any
-$4$-subset $\{a,b,c,d\}$ of named indices. (For a representable rank-$4$
-chirotope --- which we have, by construction --- this is necessary and
-sufficient: it is the standard Grassmann--Pl\"ucker characterization of topes.)
+\paragraph{Forbidden patterns are necessary, not sufficient.} A sign vector
+$\sigma$ that corresponds to a non-empty cell of the realized arrangement
+necessarily avoids every forbidden pattern --- this is what the affine
+identity $(\star_{abcd})$ proves. The converse, however, fails once $N\ge
+5$: there exist sign vectors that avoid every forbidden pattern yet are
+not realized as cells. The first ``correction-tier'' is the
+\emph{wedge-ordering} constraint, which we describe below.
 
-\paragraph{Slice test.} Given an old cell $C$ with sign vector $\sigma_C$ and a
-new plane $\Pi = ij(n{+}1)$, the slice question becomes a small constraint
-satisfaction problem. Try to extend $\sigma_C$ to a full sign vector $\sigma$ on
-$\binom{\{0,\ldots,n+1\}}{3}$ by assigning a sign to each of the
-$\binom{n+1}{2}$ new planes $\bigl\{ab(n{+}1) : 0\le a<b\le n\bigr\}$, subject
-to:
+\paragraph{Slice test (LP, with the forbidden-pattern rule as a pre-filter).}
+Given an old cell $C$ with sign vector $\sigma_C$ and a new plane
+$\Pi = ij(n{+}1)$, we ask in turn for each candidate sign $s\in\{+1,-1\}$:
+
 \begin{enumerate}
-  \item the pinned sign $\sigma(\Pi) = +$;
-  \item the forbidden-pattern rule for every $4$-subset
-  $\{a,b,c,n{+}1\}$ with $\{a,b,c\}\subset\{0,\ldots,n\}$ (there are
-  $\binom{n+1}{3}$ such subsets); each such constraint involves the known
-  old-plane sign $\sigma_C(abc)$, the three new-plane signs
-  $\sigma(ab(n{+}1)), \sigma(ac(n{+}1)), \sigma(bc(n{+}1))$, and the chirotope
-  value $\mathrm{sgn}[a,b,c,n{+}1]$ (also known --- it was pinned when $P_{n+1}$
-  was placed in cell $C^\ast$).
+  \item \emph{Cheap chirotope check.} For every $4$-subset
+  $\{a,b,c,n{+}1\}$ such that $\Pi$ is one of its four faces (i.e.\
+  $\{a,b,c\}\supseteq$ two of $\Pi$'s indices), see whether the forbidden
+  pattern fires for $\sigma_C\cup\{\Pi\!\mapsto\!s\}$ on that 4-tuple.
+  If yes, $C\cap\Pi^s$ is provably empty --- skip the LP.
+  \item \emph{LP if not yet decided.} Otherwise, run an LP for feasibility
+  of $\{\,\sigma\!\cdot\![\cdot,p]>0\,\}$ where $\sigma$ is $\sigma_C$
+  extended by $\Pi\!\mapsto\!s$. If feasible, $C\cap\Pi^s$ is realized;
+  otherwise it is not.
 \end{enumerate}
-$4$-tuples not containing $n{+}1$ are already satisfied by $\sigma_C$ from the
-previous step, so they impose nothing new. If at least one extension exists,
-the half $C\cap\Pi^+$ is non-empty. Repeat with $\sigma(\Pi) = -$. The plane
-slices $C$ iff both halves are non-empty.
+The plane slices $C$ iff both halves are non-empty. The LP uses the named
+vertices' coordinates (one specific realization of the chirotope-so-far),
+not any cell witness; cell witnesses are not stored anywhere during
+construction.
 
-\paragraph{Why this works.} Each forbidden-pattern rule is a single
-``XOR''-style clause: it forbids exactly one assignment of the three new-plane
-signs (the unique completion that, together with $\sigma_C(abc)$ and the
-chirotope sign, would form the missing-$16$th-cell pattern of tetrahedron
-$\{a,b,c,n{+}1\}$). Out of $2^3 = 8$ possible sign triples on
-$\{ab(n{+}1),ac(n{+}1),bc(n{+}1)\}$, exactly $7$ are admissible per clause,
-and the slice test is the conjunction over the $\binom{n+1}{3}$ clauses
-indexed by the choice of $\{a,b,c\}\subset\{0,\ldots,n\}$.
-
-\paragraph{Why this is also sufficient (and not merely necessary).} Necessity
-is immediate from $(\star_{abcd})$: any realized $p$ trivially satisfies every
-GP rule. The non-trivial direction is sufficiency --- if $\sigma$ violates no
-forbidden pattern, why must some $p$ realize it?
-
-The cleanest justification is via Farkas' lemma. The cell $C\cap\Pi^+$ is
-non-empty iff the strict-linear system
+\paragraph{The Farkas analysis, and where the sufficiency argument fails.}
+The cell $C\cap\Pi^+$ is non-empty iff the strict-linear system
 \[
 \bigl\{\,\sigma(abc)\,[a,b,c,p] > 0 : \text{all triples}\,\bigr\}
 \]
 is feasible in $p\in\mathbb{R}^3$. By Farkas, infeasibility requires a
 non-negative combination $\sum \lambda_{abc}\,\sigma(abc)\,[a,b,c,p]$ that is
 identically $\le 0$ as a function of $p$. Since $[a,b,c,p]$ is affine, this
-means the linear part vanishes and the constant part is $\le 0$. The
-linear-part-vanishing condition is a non-negative-coefficient signed
-dependency among the plane-normals $\mathbf{n}_{abc}$.
+means the linear part vanishes and the constant part is $\le 0$.
 
-Now: \emph{every} such dependency comes (up to scaling) from the affine
-identity itself. Differentiating $(\star_{abcd})$ in $p$ gives
+Differentiating $(\star_{abcd})$ in $p$ gives one family of linear-part-zero
+combinations: the alternating $4$-term identity
 \[
-\mathbf{n}_{abc} \;-\; \mathbf{n}_{abd} \;+\; \mathbf{n}_{acd} \;-\; \mathbf{n}_{bcd} \;=\; 0,
+\mathbf{n}_{abc} \;-\; \mathbf{n}_{abd} \;+\; \mathbf{n}_{acd} \;-\; \mathbf{n}_{bcd} \;=\; 0
 \]
-which is the unique alternating $4$-term dependency of normals associated to
-the tetrahedron $\{a,b,c,d\}$. The non-negative Farkas combination matching
-this dependency forces the sign pattern $\sigma$ to align as $(+,-,+,-)$ or
-$(-,+,-,+)$ on those four planes, and then the constant value of the
-combination is $\pm[a,b,c,d]$. The ``$\le 0$'' condition on that constant is
-\emph{exactly} the GP forbidden pattern.
+(the dependency of plane normals around the tetrahedron $\{a,b,c,d\}$). Each
+such dependency yields one Farkas certificate that fires exactly when its
+forbidden pattern is hit, so the GP rule is \emph{necessary}.
 
-So: Farkas-infeasibility $\iff$ some GP rule is violated. Contrapositive:
-GP-consistent $\iff$ realized. The algorithm is correct in the general case.
+But the tetrahedron-dependency is not the only $4$- or fewer-term
+dependency. Consider the three planes $(i,j,a), (i,j,b), (i,j,c)$ that all
+contain the line $\overline{P_iP_j}$: their normals are all perpendicular to
+that line, hence lie in a $2$-plane, hence \emph{any three of them} are
+linearly dependent. This is a $3$-term dependency among normals --- not the
+alternating $4$-term one --- and it gives Farkas certificates that GP3 does
+not see. Concretely, the $3$ planes through a common line cut a circular
+arrangement of $6$ wedges around that line; only $6$ of the $2^3=8$ sign
+patterns are realized, the other $2$ being forbidden. GP3 leaves all
+$8$ admissible. This is the ``wedge-ordering'' constraint.
 
-(Equivalently, in oriented-matroid language: we are dealing with a
-representable rank-$4$ oriented matroid, and Las Vergnas' tope characterization
-says topes are exactly the sign vectors satisfying the circuit
-sign-conditions, which for rank $4$ are the $(\star_{abcd})$ rules. Mn\"ev's
-hardness applies to \emph{abstract} chirotopes; we never face it, because we
-extend a realized configuration at every step.)
+Higher-order Pl\"ucker relations contribute further constraints, and at
+$n\ge 7$ M\"ne\v{v}--Sturmfels universality applies to general realizability
+questions. So a complete chirotope-only characterization of topes is real
+and hard.
 
-This is a CSP with $\binom{n+1}{2}$ Boolean variables and $\binom{n+1}{3}$
-clauses --- trivially solvable by backtracking for the values of $n$ relevant
-here ($n\le 6$ for everything up to the Cs\'asz\'ar polyhedron, giving
-$21$ variables and $35$ clauses).
+\paragraph{What this means for the algorithm.} GP3 is a fast pre-filter:
+when it fires, the extension is provably empty and we can skip the LP.
+When it does not fire, we have to ask the LP (using the vertex
+realizations as input data) for the final yes/no. The LP is exact and
+chirotope-respecting --- different realizations of the same chirotope
+give the same yes/no answer --- so the LP-based slicer enumerates the
+correct cell complex. The vertex witnesses are needed by the LP only as a
+specific representative of the chirotope; the cell complex shape is
+intrinsic to the chirotope.
 
-\paragraph{Why this is not NP-complete in our setting.} Realizability of an
-arbitrary abstract chirotope is $\exists\mathbb{R}$-complete (Mn\"ev), but that
-is not the question we ask: by construction we extend a chirotope that is
-already realized. For an already-realized rank-$4$ chirotope, the
-Grassmann--Pl\"ucker forbidden-pattern rule \emph{characterizes} topes, so the
-slice CSP is a faithful chirotope-only test. The CSP itself has small fixed
-arity (each clause touches only three new-plane variables), so it lies far
+\paragraph{Why this is still not NP-complete in our setting.} Realizability
+of an \emph{arbitrary} abstract chirotope is $\exists\mathbb{R}$-complete
+(Mn\"ev), but that is not the question we ask: by construction we always
+extend a chirotope that is already realized. For an already-realized
+configuration, each slice test is just LP feasibility, which lies far
 below the worst-case complexity wall.
 
 \paragraph{Per-step complexity.} For step $n \to n{+}1$: $\binom{n+1}{2}$ new
 planes, each tested against every old cell. The number of old cells is
-bounded by Zaslavsky's count, $O(n^9)$. Each individual slice test is a CSP
-of fixed structure on $\binom{n+1}{2}$ variables and $\binom{n+1}{3}$ clauses,
-each of arity $3$; backtracking solves each instance in time polynomial in
-$n$. The whole step is therefore polynomial in $n$ (dominated by the cell
-count), and entirely chirotope-based.
+bounded by Zaslavsky's count, $O(n^9)$. Each slice test is a single LP
+feasibility check (or zero, when the GP forbidden-pattern pre-filter
+fires), which is polynomial-time. The whole step is polynomial in $n$,
+dominated by the cell count.
 
 \section*{Segment-triangle piercing in bracket form}
 
