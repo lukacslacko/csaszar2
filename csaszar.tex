@@ -447,4 +447,119 @@ each of arity $3$; backtracking solves each instance in time polynomial in
 $n$. The whole step is therefore polynomial in $n$ (dominated by the cell
 count), and entirely chirotope-based.
 
+\section*{Segment-triangle piercing in bracket form}
+
+A natural geometric primitive (and a check we will need later, e.g.\ for
+``does this Cs\'asz\'ar candidate actually embed without crossings?''): given
+two segments and a triangle made of named points, does the segment
+$\overline{P_iP_j}$ pierce the (open) triangle $\triangle P_kP_lP_m$? The
+answer is a four-line test in the chirotope, no coordinates needed.
+
+\paragraph{Two conditions.} Assume the five points are in general position
+(no $4$ coplanar, so all five $4$-brackets on $\{i,j,k,l,m\}$ are nonzero).
+The segment pierces the triangle iff both:
+
+\begin{enumerate}
+  \item \emph{The line through $P_i,P_j$ pierces the triangle's interior},
+  i.e.\ the three signed volumes of segment-against-edge tetrahedra all
+  agree:
+  \[
+    \mathrm{sgn}[i,j,k,l] \;=\; \mathrm{sgn}[i,j,l,m] \;=\; \mathrm{sgn}[i,j,m,k]
+    \;\in\;\{+,-\}.
+  \]
+  Each $[i,j,\cdot,\cdot]$ is, up to sign, the signed volume of the
+  tetrahedron formed by the segment and one edge of the triangle. Their
+  common sign records the directed orientation of $\overline{P_iP_j}$
+  ``going around'' the triangle. If any one differs, the line misses or
+  grazes that edge.
+
+  \item \emph{The two endpoints $P_i,P_j$ lie on opposite sides of the
+  plane through $klm$}, so the crossing point of the line with the plane
+  falls inside the segment:
+  \[
+    \mathrm{sgn}[k,l,m,i] \;\neq\; \mathrm{sgn}[k,l,m,j].
+  \]
+\end{enumerate}
+
+So the piercing test reads off five $4$-bracket signs on $\{i,j,k,l,m\}$ and
+checks two equalities. The five brackets are tied by the GP identity
+$\sum_q (-1)^q [\widehat q] = 0$, so any one is determined up to sign by the
+other four; in practice we just take whichever signs the chirotope already
+has.
+
+\paragraph{Two-segment intersection.} As an aside: two segments
+$\overline{P_iP_j}$ and $\overline{P_kP_l}$ in $\mathbb{R}^3$ can meet inside
+their interiors only if they are coplanar, which requires $[i,j,k,l] = 0$
+--- a non-generic condition. So in the generic chirotope two named segments
+share at most a common endpoint, and $\mathrm{sgn}[i,j,k,l]$ records which
+of the two segments ``goes above'' the other (the sign of the lift).
+
+\section*{Redundant halfspaces in cell descriptions}
+
+A cell of our arrangement is described by signs on \emph{every} plane, but
+only some of these signs are \emph{essential}: dropping a non-essential one
+leaves the cell unchanged. A non-essential constraint is \emph{redundant};
+the planes whose constraints are essential are the \emph{facets} of the
+cell.
+
+\paragraph{The tetrahedron example.} In the four-plane arrangement of
+tetrahedron $0123$, the cell ``past $P_3$'' (the open cone past vertex
+$P_3$, bounded below by the three faces meeting at $P_3$) has sign vector
+\[
+  \bigl(\sigma(012),\sigma(013),\sigma(023),\sigma(123)\bigr) = (+,+,-,+).
+\]
+It really has only three facets --- the three faces $013, 023, 123$ that
+meet at $P_3$. The fourth sign $\sigma(012) = +$ is redundant: the cell
+happens to lie on the same side of $012$ as the tetrahedron's interior,
+but the plane $012$ is not a face of the cell. Equivalently, flipping
+$\sigma(012)$ to $-$ would give the sign vector $(-,+,-,+)$, which is
+precisely the missing $16$th cell --- empty. So this constraint cannot be
+the binding one.
+
+\paragraph{The chirotope-only redundancy test.} The previous paragraph
+generalizes: \emph{the constraint $\sigma_j$ on plane $\Pi_j = abc$ is
+redundant for a cell $C$ iff flipping it produces an empty cell, iff some
+forbidden-pattern rule is triggered after the flip}. Concretely,
+
+\begin{quote}
+$\sigma(abc)$ is redundant for $C$ iff there is some $d \notin \{a,b,c\}$
+such that, after flipping $\sigma(abc)$, the four signs
+$\bigl(\sigma(abc),\sigma(abd),\sigma(acd),\sigma(bcd)\bigr)$ form the
+forbidden pattern $(-,+,-,+)\cdot\mathrm{sgn}[a,b,c,d]$ of the $4$-tuple
+$\{a,b,c,d\}$.
+\end{quote}
+
+This is a pure chirotope check, with $O(n)$ work per plane (one
+$4$-tuple per choice of $d$). It tells us, for each cell, exactly which
+sign-constraints are facets and which are mere consequences of the rest.
+
+\paragraph{Speeding up cell splitting.} The same machinery serves as a
+pre-filter for the slice test. To decide whether a new plane $\Pi$ slices
+cell $C$, we previously had to ask the LP about both extensions $\sigma^+,
+\sigma^-$. With the chirotope filter:
+
+\begin{enumerate}
+  \item Run the forbidden-pattern check on $\sigma^+$ and on $\sigma^-$ in
+  $O(n)$ time, considering only the $4$-tuples that involve $\Pi$'s three
+  indices.
+  \item If both $\sigma^+$ and $\sigma^-$ are forbidden-free: $\Pi$ slices
+  $C$, do the actual split.
+  \item If exactly one is forbidden: the cell lies entirely on the other
+  side; attach that sign to $C$ and move on without an LP.
+  \item Both being forbidden cannot happen for an existing cell --- $C$
+  has a witness which already realizes one extension.
+\end{enumerate}
+
+In our $n=7$ run with $\sim\!3000$ cells, the new-plane stage at $n=8$ would
+ask $\sim\!3000\times 21$ slice questions; the filter answers most of them
+without any LP, since for most cells most new planes are redundant.
+
+\paragraph{Storing only facets.} As a representational optimization, each
+cell can be stored as the dict of its \emph{facet} signs (with the rest
+re-derived from the chirotope on demand). With this convention, the
+interior of tetrahedron $0123$ lists all four signs (four facets); the
+past-$P_3$ cone lists only three; and the forbidden $16$th cell, if it were
+realized, would list zero --- which is precisely the way to recognize that
+it is empty.
+
 \end{document}
