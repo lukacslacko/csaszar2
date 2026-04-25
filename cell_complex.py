@@ -261,7 +261,15 @@ def pierces(i, j, k, l, m, vertices):
 
 
 def numerical_pierces(P_i, P_j, P_k, P_l, P_m, eps=1e-9):
-    """Numerical Moeller-Trumbore-style segment-triangle test (open interior)."""
+    """Numerical Moeller-Trumbore-style segment-triangle test (open interior).
+
+    The determinant det_val below works out to [k,l,m,P_j] - [k,l,m,P_i].
+    When the named points are in general position (no 4 coplanar) this
+    difference can still vanish: it is exactly the case where line
+    P_i-P_j is parallel to plane klm. In that case the line is OFF the
+    plane (by general position), so the segment cannot pierce; we
+    return False rather than None.
+    """
     edge1 = P_l - P_k
     edge2 = P_m - P_k
     direction = P_j - P_i
@@ -269,7 +277,7 @@ def numerical_pierces(P_i, P_j, P_k, P_l, P_m, eps=1e-9):
     pvec = np.cross(direction, edge2)
     det_val = float(np.dot(edge1, pvec))
     if abs(det_val) < eps:
-        return None  # parallel / degenerate
+        return False  # line parallel to plane -> no piercing
 
     inv_det = 1.0 / det_val
     tvec = P_i - P_k
@@ -360,7 +368,8 @@ def pierces_validation_test(complex, n_samples=1000, seed=54321):
         print(f"  Need at least 5 vertices (have {n}); skipping.")
         return
 
-    n_agree = n_disagree = n_skipped = 0
+    n_agree = n_disagree = 0
+    n_sym_none = n_num_none = n_parallel = 0
     n_pierce_true = 0
     for _ in range(n_samples):
         idx = rng.permutation(n)[:5]
@@ -371,9 +380,21 @@ def pierces_validation_test(complex, n_samples=1000, seed=54321):
             complex.vertices[k].witness, complex.vertices[l].witness,
             complex.vertices[m].witness,
         )
-        if sym is None or num is None:
-            n_skipped += 1
-        elif sym == num:
+        # Track parallels separately (where Moeller-Trumbore det vanishes).
+        # In general position these resolve to "no piercing", so num returns False.
+        edge1 = complex.vertices[l].witness - complex.vertices[k].witness
+        edge2 = complex.vertices[m].witness - complex.vertices[k].witness
+        direction = complex.vertices[j].witness - complex.vertices[i].witness
+        det_val = float(np.dot(edge1, np.cross(direction, edge2)))
+        if abs(det_val) < 1e-9:
+            n_parallel += 1
+        if sym is None:
+            n_sym_none += 1
+            continue
+        if num is None:
+            n_num_none += 1
+            continue
+        if sym == num:
             n_agree += 1
             if sym:
                 n_pierce_true += 1
@@ -383,8 +404,9 @@ def pierces_validation_test(complex, n_samples=1000, seed=54321):
                 print(f"    DISAGREE: segment ({i},{j}) vs triangle ({k},{l},{m}): "
                       f"sym={sym}, num={num}")
     print(f"  agree: {n_agree}/{n_samples}    disagree: {n_disagree}    "
-          f"skipped: {n_skipped} (degenerate)    "
-          f"(of agreeing samples, {n_pierce_true} actually pierced)")
+          f"sym None: {n_sym_none}    num None: {n_num_none}    "
+          f"(parallel-line cases: {n_parallel})    "
+          f"(agreeing pierces: {n_pierce_true})")
 
 
 def print_facet_stats(complex, indent="    "):
