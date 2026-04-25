@@ -24,6 +24,7 @@ The demo:
      (Moeller-Trumbore-style) segment-triangle intersection.
 """
 
+import time
 import numpy as np
 from itertools import combinations
 from collections import Counter
@@ -75,16 +76,28 @@ class Cell:
 
 # === LP-based witness finder ===
 
-def find_witness(signs, vertices, slack_max=1.0, eps=1e-9):
-    """Find p in R^3 with sgn(bracket(P_i,P_j,P_k,p)) == signs[(i,j,k)] for each triple."""
+def find_witness(signs, vertices, bracket_cache=None, slack_max=1.0, eps=1e-9):
+    """Find p in R^3 with sgn(bracket(P_i,P_j,P_k,p)) == signs[(i,j,k)] for each triple.
+
+    `bracket_cache`, if provided, is a dict triple -> (a, b) for the affine
+    decomposition of [i,j,k,p] = a @ p + b; misses are filled in. Caching
+    matters: a single LP iterates over all triples in `signs` (~35 of them at
+    n=7), and we run thousands of LPs.
+    """
     if not signs:
         return np.zeros(3)
     A_ub = []
     b_ub = []
-    for (i, j, k), s in signs.items():
-        a, b = bracket_linear_part(
-            vertices[i].witness, vertices[j].witness, vertices[k].witness
-        )
+    for triple, s in signs.items():
+        if bracket_cache is not None and triple in bracket_cache:
+            a, b = bracket_cache[triple]
+        else:
+            i, j, k = triple
+            a, b = bracket_linear_part(
+                vertices[i].witness, vertices[j].witness, vertices[k].witness
+            )
+            if bracket_cache is not None:
+                bracket_cache[triple] = (a, b)
         A_ub.append([-s * a[0], -s * a[1], -s * a[2], 1.0])
         b_ub.append(s * b)
     c = [0.0, 0.0, 0.0, -1.0]
@@ -97,23 +110,15 @@ def find_witness(signs, vertices, slack_max=1.0, eps=1e-9):
 
 # === Chirotope-based forbidden-pattern test (the GP rule from the doc) ===
 
-def is_extension_consistent(signs, plane, sign_value, chirotope, n_total):
-    """Does extending `signs` with (plane: sign_value) leave every 4-tuple's
-    forbidden-pattern rule satisfied?
+def precompute_forbidden_patterns(plane, chirotope, n_total):
+    """For each 4-tuple {plane's 3 indices, d}, return the list of records
+       (planes_4, forbidden_signs) used by check_forbidden_patterns.
 
-    Iterates over 4-tuples that involve `plane`'s three indices plus a fourth
-    index `d` (the only kind of 4-tuple whose GP rule can newly be violated by
-    the extension). A 4-tuple is checkable only if all four of its plane signs
-    are known --- in `signs` or as the (plane, sign_value) trial. Returns
-    False the moment any forbidden pattern fires; True if none does.
-
-    NOTE: returning True does not by itself prove the extension is realizable
-    --- some 4-tuples may not be checkable yet because their planes' signs are
-    not in `signs`. The caller (the slice test) falls back on the LP in that
-    case. False, however, is always conclusive: a forbidden-pattern hit means
-    the extension is empty.
+    Computed once per new plane (NOT per cell), so the cell loop never
+    re-walks `d in range(n_total)` or re-builds the sorted 4-plane list.
     """
     a, b, c = plane
+    out = []
     for d in range(n_total):
         if d in (a, b, c):
             continue
@@ -122,12 +127,22 @@ def is_extension_consistent(signs, plane, sign_value, chirotope, n_total):
         if chir_sign is None:
             continue
         a_s, b_s, c_s, d_s = tuple_sorted
-        planes_4 = [
+        planes_4 = (
             (a_s, b_s, c_s),
             (a_s, b_s, d_s),
             (a_s, c_s, d_s),
             (b_s, c_s, d_s),
-        ]
+        )
+        forbidden_signs = (-chir_sign, +chir_sign, -chir_sign, +chir_sign)
+        out.append((planes_4, forbidden_signs))
+    return out
+
+
+def check_forbidden_patterns(signs, plane, sign_value, patterns):
+    """Does extending `signs` with (plane: sign_value) trigger any forbidden
+    pattern in the precomputed list? Returns False on first hit, True if
+    none fires (and uncheckable 4-tuples are silently skipped)."""
+    for planes_4, forbidden_signs in patterns:
         actual = []
         all_known = True
         for p in planes_4:
@@ -138,12 +153,17 @@ def is_extension_consistent(signs, plane, sign_value, chirotope, n_total):
             else:
                 all_known = False
                 break
-        if not all_known:
-            continue
-        forbidden = (-chir_sign, +chir_sign, -chir_sign, +chir_sign)
-        if tuple(actual) == forbidden:
+        if all_known and tuple(actual) == forbidden_signs:
             return False
     return True
+
+
+def is_extension_consistent(signs, plane, sign_value, chirotope, n_total):
+    """Convenience wrapper: precomputes patterns then checks. Use the two-step
+    form (precompute_forbidden_patterns + check_forbidden_patterns) inside the
+    cell loop to amortize across cells."""
+    patterns = precompute_forbidden_patterns(plane, chirotope, n_total)
+    return check_forbidden_patterns(signs, plane, sign_value, patterns)
 
 
 def is_facet(plane, signs, chirotope, n_total):
@@ -162,57 +182,83 @@ class CellComplex:
     def __init__(self, initial_witnesses):
         assert len(initial_witnesses) == 3
         self.vertices = [Vertex(i, w) for i, w in enumerate(initial_witnesses)]
+        self._bracket_cache = {}  # triple -> (a_grad, b_const)
         plane = (0, 1, 2)
         self.cells = [Cell({plane: +1}), Cell({plane: -1})]
         for cell in self.cells:
-            cell.witness = find_witness(cell.signs, self.vertices)
+            cell.witness = find_witness(cell.signs, self.vertices, self._bracket_cache)
             assert cell.witness is not None
         self.chirotope = {}
         self.lp_calls = 0
         self.filtered_calls = 0
 
-    def add_point_in_cell(self, target_cell):
+    def get_bracket_part(self, triple):
+        cached = self._bracket_cache.get(triple)
+        if cached is not None:
+            return cached
+        i, j, k = triple
+        result = bracket_linear_part(
+            self.vertices[i].witness, self.vertices[j].witness, self.vertices[k].witness
+        )
+        self._bracket_cache[triple] = result
+        return result
+
+    def add_point_in_cell(self, target_cell, plane_order='lex_asc'):
+        """plane_order in {'lex_asc', 'lex_desc', 'i_desc'} controls the order
+        in which the new planes ij(n) are processed in the slice loop.
+        The cell complex result is identical; only the timing of the
+        chirotope pre-filter (and so the LP / filter ratio) is affected."""
         n = len(self.vertices)  # index of the new vertex (will be appended)
         if target_cell.witness is None:
-            target_cell.witness = find_witness(target_cell.signs, self.vertices)
+            target_cell.witness = find_witness(target_cell.signs, self.vertices, self._bracket_cache)
         new_witness = target_cell.witness.copy()
         new_vertex = Vertex(n, new_witness, combinatorial=dict(target_cell.signs))
         self.vertices.append(new_vertex)
 
         # Update chirotope with new 4-tuples (a,b,c,n) for each old plane (a,b,c).
-        # sgn[a,b,c,n] = sgn[a,b,c, P_n] = target_cell.signs[(a,b,c)].
         for triple, sign in target_cell.signs.items():
             a, b, c = triple
             self.chirotope[(a, b, c, n)] = sign
 
-        new_planes = [(i, j, n) for i, j in combinations(range(n), 2)]
-        new_cells = []
-        for c in self.cells:
-            current = [c]
-            for new_plane in new_planes:
-                next_current = []
-                for cc in current:
-                    next_current.extend(self._slice_cell(cc, new_plane))
-                current = next_current
-            new_cells.extend(current)
-        self.cells = new_cells
+        # Order the new planes
+        pairs = list(combinations(range(n), 2))
+        if plane_order == 'lex_asc':
+            pass
+        elif plane_order == 'lex_desc':
+            pairs.sort(key=lambda p: (-p[0], -p[1]))
+        elif plane_order == 'i_desc':
+            pairs.sort(key=lambda p: (-p[0], p[1]))
+        else:
+            raise ValueError(f"unknown plane_order: {plane_order}")
+        new_planes = [(i, j, n) for i, j in pairs]
 
-    def _slice_cell(self, c, new_plane):
-        a, b = bracket_linear_part(*[self.vertices[idx].witness for idx in new_plane])
-        s_at_witness = a @ c.witness + b
+        # Process plane by plane across all (sub-)cells. Precompute the
+        # forbidden patterns for the current plane once, share across cells.
         n_total = len(self.vertices)
+        cells = list(self.cells)
+        for new_plane in new_planes:
+            patterns = precompute_forbidden_patterns(new_plane, self.chirotope, n_total)
+            a_lp, b_lp = self.get_bracket_part(new_plane)
+            next_cells = []
+            for cell in cells:
+                next_cells.extend(self._slice_cell(cell, new_plane, a_lp, b_lp, patterns))
+            cells = next_cells
+        self.cells = cells
+
+    def _slice_cell(self, c, new_plane, a_lp, b_lp, patterns):
+        s_at_witness = a_lp @ c.witness + b_lp
 
         if abs(s_at_witness) < 1e-9:
             # Witness lies on the new plane (it IS the just-added point).
             # Try both sides; pre-filter rejects forbidden extensions.
             results = []
             for s in (+1, -1):
-                if not is_extension_consistent(c.signs, new_plane, s, self.chirotope, n_total):
+                if not check_forbidden_patterns(c.signs, new_plane, s, patterns):
                     self.filtered_calls += 1
                     continue
                 self.lp_calls += 1
                 ns = {**c.signs, new_plane: s}
-                w = find_witness(ns, self.vertices)
+                w = find_witness(ns, self.vertices, self._bracket_cache)
                 if w is not None:
                     results.append(Cell(ns, witness=w))
             return results
@@ -223,13 +269,13 @@ class CellComplex:
 
         # Pre-filter: check the OTHER side via the chirotope. If a forbidden
         # pattern fires, the LP is guaranteed infeasible and we skip it.
-        if not is_extension_consistent(c.signs, new_plane, -s_int, self.chirotope, n_total):
+        if not check_forbidden_patterns(c.signs, new_plane, -s_int, patterns):
             self.filtered_calls += 1
             return [cell_same]
 
         self.lp_calls += 1
         other_signs = {**c.signs, new_plane: -s_int}
-        p_other = find_witness(other_signs, self.vertices)
+        p_other = find_witness(other_signs, self.vertices, self._bracket_cache)
         if p_other is not None:
             return [cell_same, Cell(other_signs, witness=p_other)]
         return [cell_same]
@@ -423,43 +469,50 @@ def print_facet_stats(complex, indent="    "):
 
 # === Demo ===
 
-def main():
-    rng = np.random.default_rng(200)
-
+def run_iteration(plane_order, seed=200, label=None, verbose=False):
+    rng = np.random.default_rng(seed)
     initial_witnesses = [
         np.array([0.0, 0.0, 0.0]),
         np.array([1.0, 0.0, 0.0]),
         np.array([0.0, 1.0, 0.0]),
     ]
-
-    print("=== Initial: 3 points (plane 012), 2 cells ===")
     cc = CellComplex(initial_witnesses)
-    for v in cc.vertices:
-        print(f"  {v}")
-    print(f"  cells: {len(cc.cells)}")
-
-    print("\n=== Adding 4 more points ===")
+    if verbose:
+        print(f"  Initial: 3 points, {len(cc.cells)} cells")
+    t0 = time.perf_counter()
     for step in range(4):
         idx = int(rng.integers(len(cc.cells)))
         chosen = cc.cells[idx]
         before = len(cc.cells)
         before_lp = cc.lp_calls
         before_filtered = cc.filtered_calls
-        cc.add_point_in_cell(chosen)
+        cc.add_point_in_cell(chosen, plane_order=plane_order)
         added = cc.vertices[-1]
         lp_done = cc.lp_calls - before_lp
         filt = cc.filtered_calls - before_filtered
         total = lp_done + filt
         skipped_pct = 100 * filt / total if total > 0 else 0.0
-        print(f"  step {step+1}: added {added} in cell {idx}  ->  {len(cc.cells)} cells (was {before})")
-        print(f"            slice tests: {lp_done} ran LP, {filt} skipped by chirotope filter "
-              f"({skipped_pct:.1f}%)")
-        print_facet_stats(cc)
+        if verbose:
+            print(f"  step {step+1} [{plane_order}]: added {added} in cell {idx}  -> "
+                  f" {len(cc.cells)} cells (was {before}); LP={lp_done}, "
+                  f"filtered={filt} ({skipped_pct:.1f}%)")
+            print_facet_stats(cc)
+    elapsed = time.perf_counter() - t0
+    return cc, elapsed
 
-    print(f"\n=== Final: {len(cc.vertices)} points, {len(cc.cells)} cells ===")
-    total = cc.lp_calls + cc.filtered_calls
-    print(f"  total slice tests: LP={cc.lp_calls}, filtered={cc.filtered_calls} "
-          f"({100*cc.filtered_calls/total:.1f}% skipped)")
+
+def main():
+    initial_witnesses = [
+        np.array([0.0, 0.0, 0.0]),
+        np.array([1.0, 0.0, 0.0]),
+        np.array([0.0, 1.0, 0.0]),
+    ]
+
+    print("=== Reference run (lex_asc order, with full verifications) ===")
+    cc, elapsed = run_iteration('lex_asc', verbose=True)
+    print(f"\n  Final: {len(cc.vertices)} points, {len(cc.cells)} cells, "
+          f"{elapsed:.2f}s, LP={cc.lp_calls}, filtered={cc.filtered_calls} "
+          f"({100*cc.filtered_calls/(cc.lp_calls+cc.filtered_calls):.1f}% skipped)")
 
     print("\n=== Verifying cell witnesses against their sign vectors ===")
     verify_cell_witnesses(cc)
@@ -469,6 +522,16 @@ def main():
 
     print("\n=== Random segment-triangle piercing test (1000 samples) ===")
     pierces_validation_test(cc, n_samples=1000)
+
+    print("\n=== Plane-ordering comparison ===")
+    print("  (same seed, same final cells; only the slice-loop ordering differs)")
+    print(f"  {'order':<10}  {'cells':>6}  {'LP calls':>9}  {'filtered':>9}  {'skip%':>7}  {'time (s)':>9}")
+    for order in ('lex_asc', 'i_desc', 'lex_desc'):
+        cc_o, elapsed_o = run_iteration(order, verbose=False)
+        total = cc_o.lp_calls + cc_o.filtered_calls
+        pct = 100.0 * cc_o.filtered_calls / total if total else 0.0
+        print(f"  {order:<10}  {len(cc_o.cells):>6}  {cc_o.lp_calls:>9}  "
+              f"{cc_o.filtered_calls:>9}  {pct:>6.1f}%  {elapsed_o:>9.2f}")
 
 
 if __name__ == "__main__":
